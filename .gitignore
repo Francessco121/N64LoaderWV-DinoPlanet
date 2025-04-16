@@ -1,9 +1,0 @@
-/bin
-/build
-/dist
-/lib
-/.*/
-*.sla
-.classpath
-.project
-.gradle

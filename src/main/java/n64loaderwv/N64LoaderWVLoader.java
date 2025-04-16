@@ -89,6 +89,7 @@ public class N64LoaderWVLoader extends AbstractLibrarySupportLoader {
 			add(new BlockInfo(0xa4600000, 0xa4600034, "Peripheral Interface (PI) Registers",".pireg"));
 			add(new BlockInfo(0xa4700000, 0xa470001F, "RDRAM Interface (RI) Registers",".rireg"));
 			add(new BlockInfo(0xa4800000, 0xa480001b, "Serial Interface (SI) Registers",".sireg"));
+			add(new BlockInfo(0xa5000500, 0xa500054b, "N64 Disk Drive (DD) Registers",".ddreg"));
 			add(new BlockInfo(0x1FC00000, 0x1FC007BF, "PIF Boot ROM",".pifrom"));
 			add(new BlockInfo(0x1FC007C0, 0x1FC007FF, "PIF RAM",".pifram"));
 			add(new BlockInfo(0x80000000, 0x800003FF, "Interrupt Vector Table",".ivt"));
@@ -134,8 +135,8 @@ public class N64LoaderWVLoader extends AbstractLibrarySupportLoader {
 		
 		validDPRom = br.readInt(0x3B) == 0x4E445045; // NDPE
 		
-		if(validRom && validDPRom)
-			loadSpecs.add(new LoadSpec(this, 0, new LanguageCompilerSpecPair("MIPS:BE:64:64-32addr", "default"), true));
+		if(valid)
+			loadSpecs.add(new LoadSpec(this, 0, new LanguageCompilerSpecPair("MIPS:BE:64:64-32addr", "o32"), true));
 		
 		return loadSpecs;
 	}
@@ -221,9 +222,26 @@ public class N64LoaderWVLoader extends AbstractLibrarySupportLoader {
 			
 			bapROM.close();
 			
-			//if(!((String)options.get(0).getValue()).isEmpty())
-				//ScanPatterns(buffROM, h.loadAddress, (String)options.get(0).getValue(), program, monitor);
-			
+			if(!((String)options.get(0).getValue()).isEmpty())
+			{
+				String filePath =  (String)options.get(0).getValue();
+				boolean done = false;
+				try
+				{
+					ScanPatterns(buffROM, h.loadAddress, filePath, program, monitor);
+					done = true;
+				}
+				catch (Exception ex) {}
+				if(!done)
+				{
+					try
+					{
+						ApplyN64sym(buffROM, h.loadAddress, filePath, program, monitor);
+						done = true;
+					}
+					catch (Exception ex) {}					
+				}
+			}
 			try
 			{
 				Address addr = MakeAddress(0x1FC00000L);
@@ -242,7 +260,7 @@ public class N64LoaderWVLoader extends AbstractLibrarySupportLoader {
 				if(addr != null)
 				{
 					program.getSymbolTable().addExternalEntryPoint(addr);
-				    program.getSymbolTable().createLabel(addr, "romMain", SourceType.ANALYSIS);
+				    program.getSymbolTable().createLabel(addr, "ramMain", SourceType.ANALYSIS);
 				}
 				program.getSymbolTable().createLabel(MakeAddress(0xA3f00000L), "RDRAM_CONFIG", SourceType.ANALYSIS);
 				program.getSymbolTable().createLabel(MakeAddress(0xA3f00004L), "RDRAM_DEVICE_ID", SourceType.ANALYSIS);
@@ -320,7 +338,25 @@ public class N64LoaderWVLoader extends AbstractLibrarySupportLoader {
 				program.getSymbolTable().createLabel(MakeAddress(0xA4800004L), "SI_PIF_ADDR_RD64B_REG", SourceType.ANALYSIS);
 				program.getSymbolTable().createLabel(MakeAddress(0xA4800010L), "SI_PIF_ADDR_WR64B_REG", SourceType.ANALYSIS);
 				program.getSymbolTable().createLabel(MakeAddress(0xA4800018L), "SI_STATUS", SourceType.ANALYSIS);
-				program.getSymbolTable().createLabel(MakeAddress(0x80000000L), "TLB_REFILL", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000500L), "ASIC_DATA", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000504L), "ASIC_MISC_REG", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000508L), "ASIC_STATUS", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA500050CL), "ASIC_CUR_TK", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000510L), "ASIC_BM_STATUS", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000514L), "ASIC_ERR_SECTOR", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000518L), "ASIC_SEQ_STATUS", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA500051CL), "ASIC_CUR_SECTOR", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000520L), "ASIC_HARD_RESET", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000524L), "ASIC_C1_SO", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000528L), "ASIC_HOST_SECBYTE", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA500052CL), "ASIC_C1_S2", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000530L), "ASIC_SEC_BYTE", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000534L), "ASIC_C1_S4", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000538L), "ASIC_C1_S6", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA500053CL), "ASIC_CUR_ADDR", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000540L), "ASIC_ID_REG", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000544L), "ASIC_TEST_REG", SourceType.ANALYSIS);
+				program.getSymbolTable().createLabel(MakeAddress(0xA5000548L), "ASIC_TEST_PIN_SEL", SourceType.ANALYSIS);
 				program.getSymbolTable().createLabel(MakeAddress(0x80000000L), "TLB_REFILL", SourceType.ANALYSIS);
 				program.getSymbolTable().createLabel(MakeAddress(0x80000080L), "XTLB_REFILL", SourceType.ANALYSIS);
 				program.getSymbolTable().createLabel(MakeAddress(0x80000100L), "CACHE_ERROR", SourceType.ANALYSIS);
@@ -444,50 +480,63 @@ public class N64LoaderWVLoader extends AbstractLibrarySupportLoader {
 		buff[b] = t;
 	}
 	
-	public void ScanPatterns(byte[] rom, long loadAddress, String sigPath, Program program, TaskMonitor monitor)
+	public void ApplyN64sym(byte[] rom, long loadAddress, String sigPath, Program program, TaskMonitor monitor) throws IOException, InvalidInputException
 	{
-		try
+		Log.info("N64 Loader: Trying to loading signature file as N64sym format");
+		List<String> lines = Files.readAllLines(Paths.get(sigPath));
+		for(String line : lines)
 		{
-			Log.info("N64 Loader: Loading patterns");
-			ArrayList<SigPattern> patterns = new ArrayList<SigPattern>();
-			List<String> lines = Files.readAllLines(Paths.get(sigPath));
-			int maxPatLen = 32;
-			for(String line : lines)
+			String[] parts = line.split(" ");
+			if(parts.length != 2)
+				continue;
+			long address = Long.parseLong(parts[0], 16);
+			String name = parts[1];
+			if(address >= loadAddress)
 			{
-				String[] parts = line.split(" ");
-				if(parts.length != 2)
-					continue;
-				SigPattern pat = new SigPattern(parts[0], parts[1]);
-				if(pat.pattern.length > maxPatLen)
-					maxPatLen = pat.pattern.length;
-				patterns.add(pat);
-			}			
-			Log.info("N64 Loader: Scanning for patterns (" + patterns.size() + ")...");
-			monitor.initialize(rom.length - maxPatLen);
-			monitor.setMessage("Scanning for patterns (" + patterns.size() + ")...");
-			for(int i = 0; i < rom.length - maxPatLen; i += 4)
-			{				
-				if((i % 0x1000) == 0)
-					monitor.setProgress(i);
-				for(int j = 0; j < patterns.size(); j++)
+				SymbolUtilities.createPreferredLabelOrFunctionSymbol(program, MakeAddress(address), null, name, SourceType.ANALYSIS);
+			    Log.info("N64 Loader: Loaded Symbol at " + String.format("0x%08X", address) + " Name=" + name);
+			}
+		}	
+	}
+	
+	public void ScanPatterns(byte[] rom, long loadAddress, String sigPath, Program program, TaskMonitor monitor) throws IOException, InvalidInputException
+	{
+		Log.info("N64 Loader: Trying to loading signature file as default format");
+		ArrayList<SigPattern> patterns = new ArrayList<SigPattern>();
+		List<String> lines = Files.readAllLines(Paths.get(sigPath));
+		int maxPatLen = 32;
+		for(String line : lines)
+		{
+			String[] parts = line.split(" ");
+			if(parts.length != 2)
+				continue;
+			SigPattern pat = new SigPattern(parts[0], parts[1]);
+			if(pat.pattern.length > maxPatLen)
+				maxPatLen = pat.pattern.length;
+			patterns.add(pat);
+		}			
+		Log.info("N64 Loader: Scanning for patterns (" + patterns.size() + ")...");
+		monitor.initialize(rom.length - maxPatLen);
+		monitor.setMessage("Scanning for patterns (" + patterns.size() + ")...");
+		for(int i = 0; i < rom.length - maxPatLen; i += 4)
+		{				
+			if((i % 0x1000) == 0)
+				monitor.setProgress(i);
+			for(int j = 0; j < patterns.size(); j++)
+			{
+				SigPattern sig = patterns.get(j);
+				if(sig.Match(rom, i))
 				{
-					SigPattern sig = patterns.get(j);
-					if(sig.Match(rom, i))
+					long address = loadAddress + i - 0x1000;
+					Address addr = MakeAddress(address);                       
+					if(addr != null)
 					{
-						long address = loadAddress + i - 0x1000;
-						Address addr = MakeAddress(address);                       
-						if(addr != null)
-						{
-						    SymbolUtilities.createPreferredLabelOrFunctionSymbol(program, addr, null, sig.name, SourceType.ANALYSIS);
-						    Log.info("N64 Loader: Found Symbol at " + String.format("0x%08X", address) + " Name=" + sig.name);
-						}
-						break;
+					    SymbolUtilities.createPreferredLabelOrFunctionSymbol(program, addr, null, sig.name, SourceType.ANALYSIS);
+					    Log.info("N64 Loader: Found Symbol at " + String.format("0x%08X", address) + " Name=" + sig.name);
 					}
+					break;
 				}
 			}
-		} catch (IOException | InvalidInputException e) 
-		{
-			Msg.error(this, e);
 		}
 	}
 
