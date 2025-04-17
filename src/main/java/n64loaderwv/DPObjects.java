@@ -74,7 +74,7 @@ public class DPObjects
 			
 			int dllIndex = dlltab.DecodeDLLId(dllRawId);
 			
-			String objName = handle.readTerminatedString(offsets.get(i) + 0x5F, (char)0);
+			String objName = handle.readUtf8String(offsets.get(i) + 0x5F, (char)0);
 			
 			dllidx_to_objname.put(dllIndex, objName);
 		}

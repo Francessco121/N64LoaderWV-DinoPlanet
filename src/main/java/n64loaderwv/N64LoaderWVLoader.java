@@ -135,7 +135,7 @@ public class N64LoaderWVLoader extends AbstractLibrarySupportLoader {
 		
 		validDPRom = br.readInt(0x3B) == 0x4E445045; // NDPE
 		
-		if(valid)
+		if(validRom && validDPRom)
 			loadSpecs.add(new LoadSpec(this, 0, new LanguageCompilerSpecPair("MIPS:BE:64:64-32addr", "o32"), true));
 		
 		return loadSpecs;
